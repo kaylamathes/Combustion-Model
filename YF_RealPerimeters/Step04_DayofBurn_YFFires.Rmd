@@ -1,0 +1,76 @@
+--
+title: "Julian to month day year date"
+author: "Anna Talucci"
+date: '2022-09-28'
+output: html_document
+---
+
+# Overview
+Take Day of Burn day of year day and convert to YYYY-MM-DD for EE script for extracting FWI.
+
+Input data is from Earth Engine output
+
+# Library
+```{r}
+library(tidyverse)
+library(sf)
+library(vroom)
+```
+
+
+# Data
+## Shapefile
+
+```{r}
+pts = st_read("OutputYFFires/BurnPoints.shp", "BurnPoints")
+
+#all_predictors  <- read.csv("../Retraining/all_predictors_DateModification.csv")
+pts1 = pts %>%
+  dplyr::select(NAME, RID, geometry)
+
+```
+
+## DoB
+# vector of data files
+
+```{r}
+f <- list.files(path = "../YF_RealPerimeters/OutputYFFires/Step03/", pattern = "*.csv", full.names = TRUE)
+allData = vroom::vroom(f)
+```
+
+```{r}
+allData
+```
+# add Date as string
+```{r}
+( allData1 = allData %>% 
+    mutate(yyyymmdd= as.Date(BurnDate-1, origin=paste0(ID2, "-01-01")))%>% 
+    mutate(ID1 = as.character(ID1))%>%
+    mutate(Date = as.character(yyyymmdd)) %>%
+  left_join(., pts1, by = join_by("RID", "NAME")) %>%
+    st_as_sf() %>%
+    rename(DOB_Ist = BurnDate, Ignition_date = date)
+)
+
+```
+
+
+# Get calendar date
+with quotes and separated by comma to add to GEE code.
+
+```{r}
+cat(paste0(sprintf("'%s'", sort(unique(allData1$Date))), collapse = ", "))
+
+#cat(paste0(sprintf("'%s'", sort(unique(all_predictors$Date))), collapse = ", "))
+
+cat(paste0(sprintf("'%s'", length(unique(allData1$Date)))))
+cat(paste0(sprintf("'%s'", length(unique(allData1$NAME)))))
+
+cat(paste0(sprintf("'%s'", length(unique(allData$NAME)))))
+cat(paste0(sprintf("'%s'", length(unique(pts$NAME)))))
+```
+
+# Save pt shp file
+```{r}
+st_write(allData1, "../YF_RealPerimeters/OutputYFFires/DayofBurn.shp", driver="ESRI Shapefile", append = FALSE)
+```
