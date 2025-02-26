@@ -1,0 +1,176 @@
+---
+title: "Analysis"
+author: "Kayla C. Mathes"
+date: "2025-02-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r include = TRUE}
+##Analysis Real Fire burned area combustion rates 
+options(scipen =999)
+
+##load Library
+library(tidyverse)
+library(ggplot2)
+library(plotrix)
+
+##Load firedataset to extract estimated total acres
+fire_dataset <- read.csv("/Users/kmathes/Desktop/FireDataSelection/BuiltFireDatasets/FinalDataset/StateWideYedomaFireDataset.csv")%>%
+  dplyr::select(NAME, FIRESEASON, ESTIMATEDTOTALACRES,DISCOVERYSIZE, RECORDNUMBER)%>%
+  rename(burn_year = FIRESEASON)%>%
+  rename(RECORDN = RECORDNUMBER)
+
+
+##import modeled combustion output
+above_combustionSW <- read.csv("State_SW_purple_green/Output/AbovegroundCombustionRetrained.csv")
+below_combustionSW <- read.csv("State_SW_purple_green/Output/BelowgroundCombustionRetrained.csv")
+
+above_combustionNE <- read.csv("State_NE_red/Output/AbovegroundCombustionRetrained.csv")
+below_combustionNE <- read.csv("State_NE_red/Output/BelowgroundCombustionRetrained.csv")
+
+above_combustionNW <- read.csv("State_NW_yellow/Output/AbovegroundCombustionRetrained.csv")
+below_combustionNW <- read.csv("State_NW_yellow/Output/BelowgroundCombustionRetrained.csv")
+
+above_combustionYF <- read.csv("YF_RealPerimeters/OutputYFFires/AbovegroundCombustionRetrained.csv")%>%
+  dplyr::select(!CNA_MAR)
+below_combustionYF <- read.csv("YF_RealPerimeters/OutputYFFires/BelowgroundCombustionRetrained.csv")%>%
+  dplyr::select(!CNA_MAR)
+
+
+##Join the different above and belowground combustion data into one dataframe for analysis as these data are collected:
+
+above_combustion <- rbind(above_combustionSW,above_combustionNE,above_combustionNW)%>%
+  dplyr::select(!date.x)%>%
+  dplyr::select(!date.y)%>%
+  dplyr::select(!date.x.x)%>%
+  dplyr::select(!date.y.y)%>%
+  dplyr::select(!date.x.x.x)%>%
+  dplyr::select(!date.y.y.y)
+  
+below_combustion <- rbind(below_combustionSW,below_combustionNE,below_combustionNW)%>%
+  dplyr::select(!date.x)%>%
+  dplyr::select(!date.y)%>%
+  dplyr::select(!date.x.x)%>%
+  dplyr::select(!date.y.y)%>%
+  dplyr::select(!date.x.x.x)%>%
+  dplyr::select(!date.y.y.y)
+
+
+above_combustion <- rbind(above_combustion, above_combustionYF)
+below_combustion <- rbind(below_combustion, below_combustionYF)
+
+
+
+
+
+
+##Clean up these datasets and convert the burn acres to m2 and convert the prediction to kg C
+above_combustion <- left_join(above_combustion, fire_dataset, by = c("RECORDN", "burn_year"))%>%
+  dplyr::select(!"NAME.y")%>%
+    rename(NAME = "NAME.x")%>%
+  mutate(TotalBurnArea_m2 = ESTIMATEDTOTALACRES*4046.86)%>%
+  mutate(DiscoveryBurnArea_m2 = DISCOVERYSIZE*4046.86)
+  
+above_combustion <- above_combustion%>%
+  mutate(combustion = prediction/1000)
+
+below_combustion <- left_join(below_combustion, fire_dataset, by = c("RECORDN", "burn_year"))%>%
+  dplyr::select(!"NAME.y")%>%
+  rename(NAME = "NAME.x")%>%
+  mutate(TotalBurnArea_m2 = ESTIMATEDTOTALACRES*4046.86)%>%
+  mutate(DiscoveryBurnArea_m2 = DISCOVERYSIZE*4046.86)
+
+
+below_combustion <- below_combustion%>%
+  mutate(combustion = prediction/1000)
+```
+
+```{r pressure, echo=FALSE}
+###Plot the combustion rates
+ggplot(above_combustion, aes(x= NAME, y = combustion, group = NAME)) +
+  geom_boxplot(fill = "darkgreen") + 
+  xlab("Fire Name") + ylab("Aboveground Combustion (Kg C m^2)")+
+  theme_classic()
+
+ggplot(below_combustion, aes(x= NAME, y = combustion, group = NAME)) +
+  geom_boxplot(fill = "tan4") + 
+  xlab("Fire Name") + ylab("Belowground Combustion (Kg C m^2)")+
+  theme_classic()
+
+```
+
+
+```{r include = FALSE}
+## calculate the total combustion per fire by multiplying the total burned area with the combustion rate. Then Calculate mean combustion and se. 
+above_combustion_total <- above_combustion%>%
+  mutate(Totalcombustion_kgC = combustion*TotalBurnArea_m2)
+
+below_combustion_total <- below_combustion%>%
+  mutate(Totalcombustion_kgC = combustion*TotalBurnArea_m2)
+
+##Calculate averages and high and low from se
+above_combustion_average <- above_combustion_total%>%
+  group_by(NAME, burn_year, TotalBurnArea_m2, DiscoveryBurnArea_m2)%>%
+  summarize(combustion_mean = mean(Totalcombustion_kgC), combustion_se = std.error(Totalcombustion_kgC))%>%
+  mutate(combustion_low = combustion_mean - combustion_se)%>%
+  mutate(combustion_high = combustion_mean + combustion_se)%>%
+    mutate(combustion_mean_MgC = combustion_mean/1000)%>%
+  mutate(combustion_low_MgC = combustion_low/1000)%>%
+  mutate(combustion_high_MgC = combustion_high/1000)
+ 
+below_combustion_average <- below_combustion_total%>%
+  group_by(NAME, burn_year, TotalBurnArea_m2, DiscoveryBurnArea_m2)%>%
+  summarize(combustion_mean = mean(Totalcombustion_kgC), combustion_se = std.error(Totalcombustion_kgC))%>%
+  mutate(combustion_low = combustion_mean - combustion_se)%>%
+  mutate(combustion_high = combustion_mean + combustion_se)%>%
+  mutate(combustion_mean_MgC = combustion_mean/1000)%>%
+  mutate(combustion_low_MgC = combustion_low/1000)%>%
+  mutate(combustion_high_MgC = combustion_high/1000)
+
+```
+
+
+```{r echo = FALSE}
+
+##Plot total combustion per fire 
+ggplot(above_combustion_average, aes(x= NAME, y = combustion_mean_MgC)) +
+  geom_bar(fill = "darkgreen", stat = "identity") + 
+  xlab("Fire Name") + ylab("Aboveground Combustion (Mg C)")+
+  geom_errorbar(aes(ymin = combustion_low_MgC, ymax = combustion_high_MgC), width = 0.2)+
+  theme_classic()
+
+ggplot(below_combustion_average, aes(x= NAME, y = combustion_mean_MgC)) +
+  geom_bar(fill = "tan4", stat = "identity") + 
+  xlab("Fire Name") + ylab("Belowground Combustion (Mg C)")+
+  geom_errorbar(aes(ymin = combustion_low_MgC, ymax = combustion_high_MgC), width = 0.2)+
+  theme_classic()
+
+```
+
+```{r include = FALSE}
+###Graph the average across all fires 
+above_combustion_total <- above_combustion_total%>%
+  mutate(Type = "Above")
+
+below_combustion_total <- below_combustion_total%>%
+  mutate(Type = "Below")
+
+combustion_total <- rbind(below_combustion_total , above_combustion_total)%>%
+  mutate(Totalcombustion_MgC = Totalcombustion_kgC/1000)
+```
+
+
+```{r echo = FALSE}
+
+##
+ggplot(combustion_total, aes(x = Type, y = Totalcombustion_MgC, group = Type, fill = Type))+ 
+  geom_boxplot()+
+ scale_fill_manual(values = c("darkgreen", "tan4"))
+
+```
+
