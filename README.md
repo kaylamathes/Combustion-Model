@@ -34,10 +34,10 @@ For preparing the FWI parameters for retraining dataset:
 ### Retraining: Stefano's training models 
 "combustion_training_workflow_mathes.R": Runs random forest model on the retraining dataset, and creates the machine learning models for above and belowground combusiton prediction.  
 
-   Model_Above: Above_full_model_ranger.rds
+Model_Above: Above_full_model_ranger.rds
                   rfe_importance.csv
                   
-   Model_Below: Below_full_model_ranger.rds
+Model_Below: Below_full_model_ranger.rds
                   rfe_importance.csv           
         
 
