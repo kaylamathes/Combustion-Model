@@ -1,4 +1,4 @@
-# Combustion Model
+# Combustion Model Workflow
 
 ## Overview 
 Workflow to estimate above and belowground combustion for historical fires on yedoma in the boreal Alaska Interior that were suppressed with early action. 
@@ -35,15 +35,15 @@ extract FWI data for all the days of burn for each fire. Download the csv files 
 Second, R script "Step05_FWI_continued.R": 
 Create a csv and a shapefile series “FWI_average” of the average FWI parameters for the different days of burn for each fire. (Since we don’t know which part of the burned area burned on which day, so we take the average FWI data for all days of burn). 
 
-###Step 06: 
+### Step 06: 
 GEE script: “Step06_StaticVegetation”: https://code.earthengine.google.com/6142989d303d29308590bfc84a66528b
 Extract the landcover parameters for each fire. Download the csv file in Step 06. 
 
-###Step 07: 
+### Step 07: 
 GEE script: “TreeCoverExtract”: https://code.earthengine.google.com/d4e5cefbdf5bfb9f85439bc32915f8b9
 Extract the tree cover percentage for each fire. Download the csv files in Step 07. 
 
-###Step 08: 
+### Step 08: 
 First: R script: “TWI_input.R” 
 Calculate the TWI tif from the DEM files associated with each fire. Import these TWI tif files into GEE. 
 
