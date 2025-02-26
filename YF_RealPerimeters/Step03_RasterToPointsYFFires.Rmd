@@ -1,0 +1,244 @@
+---
+title: "Step03_RasterToPointsYFFires"
+output: html_document
+date: "2024-11-25"
+---
+
+# Overview
+Produce point shapefiles for burned areas within landscapes of interest. Each point is a landsat pixel.
+
+# Packages
+```{r}
+library(terra)
+library(gdalUtilities)
+library(sf)
+library(tidyverse)
+library(ids)
+library(stringi)
+
+```
+
+# Data
+
+## Perimeter Shapefile Data
+
+```{r}
+YFBurn = st_read("../YF_RealPerimeters/OutputYFFires/YFFiresPerimeters.shp", "YFFiresPerimeters")%>%
+  st_transform(crs = 3338)
+
+```
+
+## List of rasters  
+
+```{r}
+
+bilist <- list.files(path="../YF_RealPerimeters/OutputYFFires/Step02/",pattern='tif$', full.names = TRUE)
+
+```
+
+#View the raster
+```{r}
+bilist
+
+```
+
+### Name items in a list with file name
+
+```{r}
+names(bilist) <- tools::file_path_sans_ext(basename(bilist))
+
+```
+
+#Functions
+```{r}
+
+
+df_to_sf <- function(x){
+  st_as_sf(x, 
+           coords = c("lon","lat"),
+           crs=3338)
+}
+
+```
+
+# Map functions across list
+
+```{r}
+geousa <- function(list){ 
+  purrr::map(list, rast) %>%
+  purrr::map(., as.points) %>%
+  purrr::map(., df_to_sf) %>% 
+  map2(names(.), ~mutate(.x, FXN = .y)) %>%
+  bind_rows() %>%
+  st_intersection(., YFBurn) %>%
+     mutate(ID1 = stri_rand_strings(n(), 9)) %>%
+  st_transform(., crs = 3338)
+  # mutate(ID = as.numeric(str_extract(FXN, "[0-9]+"))) 
+    #dplyr::select(lat, lon, FXN, FIREYEA, ID1, geometry) %>%
+}
+
+```
+
+# Apply Functions
+
+```{r}
+bi2 = geousa(bilist)
+```
+
+## Check and summarize and rename FXN and fireYr and select only the columns of interest 
+##RID column is to create a unqiue ID within a given year in case you have to separate the GEE within a year because it is too big 
+```{r}
+bi2
+
+length(unique(bi2$FXN))
+length(unique(bi2$ID1))
+
+
+bi2 <- bi2%>%
+  dplyr::select(!ID)%>%
+rename (ID = FXN,ID2 = fireYr)%>%
+  group_by(ID2)%>%
+  mutate(RID = row_number())%>%
+  dplyr::select(ID1, ID2, lat, lon, ID, RECORDN, NAME, date, RID,geometry)
+
+bi2$RID <- as.numeric(bi2$RID)
+
+```
+
+# Write to shp
+
+```{r}
+st_write(bi2, "OutputYFFires/BurnPoints.shp", driver="ESRI Shapefile", append = FALSE)
+```
+
+# Work around for step 5 (because we can't use modis to find burn date)
+# Create separate csv files (that will look similar to the output from step 5 in EE) for each fire and each day that the fire lasted (will be between 1 - 3 days)
+
+```{r}
+
+###Medicine Lake (2005) Number of days burned: 2005-06-13
+ManualDoBMedicineLake1 <- bi2%>%
+  filter(NAME == "Medicine Lake")%>%
+  mutate(BurnDate = 164)
+
+st_write(ManualDoBMedicineLake1, "OutputYFFires/Step03/ManualDoBMedicineLake1.csv")
+
+ManualDoBMedicineLake2 <- bi2%>%
+  filter(NAME == "Medicine Lake")%>%
+  mutate(BurnDate = 165)
+
+st_write(ManualDoBMedicineLake2, "OutputYFFires/Step03/ManualDoBMedicineLake2.csv")
+
+
+###Chloya Lakes (2006) Number of days burned: 2006-08-01
+ManualDoBChloyaLakes1 <- bi2%>%
+  filter(NAME == "Chloya Lakes")%>%
+  mutate(BurnDate = 213)
+
+#st_write(ManualDoBChloyaLakes1, "OutputYFFires/Step03/ManualDoBChloyaLakes1.csv")
+
+ManualDoBChloyaLakes2 <- bi2%>%
+  filter(NAME == "Chloya Lakes")%>%
+  mutate(BurnDate = 214)
+
+#st_write(ManualDoBChloyaLakes2, "OutputYFFires/Step03/ManualDoBChloyaLakes2.csv")
+
+ManualDoBChloyaLakes3 <- bi2%>%
+  filter(NAME == "Chloya Lakes")%>%
+  mutate(BurnDate = 215)
+
+#st_write(ManualDoBChloyaLakes3, "OutputYFFires/Step03/ManualDoBChloyaLakes3.csv")
+
+###Marten Creen (2007) Number of days burned: 2007-06-06
+ManualDoBMartenCreen1 <- bi2%>%
+  filter(NAME == "Marten Creek")%>%
+  mutate(BurnDate = 151)
+
+#st_write(ManualDoBMartenCreen1, "OutputYFFires/Step03/ManualDoBMartenCreen1.csv")
+
+ManualDoBMartenCreen2 <- bi2%>%
+  filter(NAME == "Marten Creek")%>%
+  mutate(BurnDate = 152)
+
+#st_write(ManualDoBMartenCreen2, "OutputYFFires/Step03/ManualDoBMartenCreen2.csv")
+
+ManualDoBMartenCreen3 <- bi2%>%
+  filter(NAME == "Marten Creek")%>%
+  mutate(BurnDate = 153)
+#st_write(ManualDoBMartenCreen3, "OutputYFFires/Step03/ManualDoBMartenCreen3.csv")
+
+## Chahalie (2008) Number of days burned: 2008-07-13
+ManualDoBChahalie1 <- bi2%>%
+  filter(NAME == "Chahalie")%>%
+  mutate(BurnDate = 195)
+#st_write(ManualDoBChahalie1, "OutputYFFires/Step03/ManualDoBChahalie1.csv")
+
+ManualDoBChahalie2 <- bi2%>%
+  filter(NAME == "Chahalie")%>%
+  mutate(BurnDate = 196)
+#st_write(ManualDoBChahalie2, "OutputYFFires/Step03/ManualDoBChahalie2.csv")
+
+
+## Discovery Creek (2009) Number of days burned: 2009-07-17
+ManualDoBDiscoveryCreek1 <- bi2%>%
+  filter(NAME == "Discovery Creek")%>%
+  mutate(BurnDate = 198)
+#st_write(ManualDoBDiscoveryCreek1, "OutputYFFires/Step03/ManualDoBDiscoveryCreek1.csv")
+
+ManualDoBDiscoveryCreek2 <- bi2%>%
+  filter(NAME == "Discovery Creek")%>%
+  mutate(BurnDate = 199)
+#st_write(ManualDoBDiscoveryCreek2, "OutputYFFires/Step03/ManualDoBDiscoveryCreek2.csv")
+
+ManualDoBDiscoveryCreek3 <- bi2%>%
+  filter(NAME == "Discovery Creek")%>%
+  mutate(BurnDate = 200)
+#st_write(ManualDoBDiscoveryCreek3, "OutputYFFires/Step03/ManualDoBDiscoveryCreek3.csv")
+
+
+## Vunle Lakes (2017) Number of days burned: 2017-07-08
+ManualDoBVunleLakes1 <- bi2%>%
+  filter(NAME == "Vunle Lakes")%>%
+  mutate(BurnDate = 189)
+#st_write(ManualDoBVunleLakes1, "OutputYFFires/Step03/ManualDoBVunleLakes1.csv")
+
+ManualDoBVunleLakes2 <- bi2%>%
+  filter(NAME == "Vunle Lakes")%>%
+  mutate(BurnDate = 190)
+
+#st_write(ManualDoBVunleLakes2, "OutputYFFires/Step03/ManualDoBVunleLakes2.csv")
+
+ManualDoBVunleLakes3 <- bi2%>%
+  filter(NAME == "Vunle Lakes")%>%
+  mutate(BurnDate = 191)
+#st_write(ManualDoBVunleLakes3, "OutputYFFires/Step03/ManualDoBVunleLakes3.csv")
+
+## Burman Lakes (2021) Number of days burned: 2021-07-23
+ManualDoBBurmanLake1 <- bi2%>%
+  filter(NAME == "Burman Lake")%>%
+  mutate(BurnDate = 204)
+
+#st_write(ManualDoBBurmanLake1, "OutputYFFires/Step03/ManualDoBBurmanLake1.csv")
+
+## Kuranakh (2022) Number of days burned: 2022-06-18
+ManualDoBKuranakh1 <- bi2%>%
+  filter(NAME == "Kuranakh")%>%
+  mutate(BurnDate = 169)
+
+#st_write(ManualDoBKuranakh1, "OutputYFFires/Step03/ManualDoBKuranakh1.csv")
+
+ManualDoBKuranakh2 <- bi2%>%
+  filter(NAME == "Kuranakh")%>%
+  mutate(BurnDate = 170)
+
+#st_write(ManualDoBKuranakh2, "OutputYFFires/Step03/ManualDoBKuranakh2.csv")
+
+
+## Little Mosquito (2022) Number of days burned: 2022-07-24
+ManualDoBLittleMosquito1 <- bi2%>%
+  filter(NAME == "Little Mosquito")%>%
+  mutate(BurnDate = 205)
+#st_write(ManualDoBLittleMosquito1, "OutputYFFires/Step03/ManualDoBLittleMosquito1.csv")
+
+```
+
