@@ -1,5 +1,5 @@
 # Combustion Model
-<<<<<<< HEAD
+
 
 Workflow to estimate above and belowground combustion for historical fires on yedoma in the boreal Alaska Interior that were suppressed with early action. 
 Using this model to quantify both "real" combustion, combustion that occured before the fire was contained/controlled. 
@@ -77,9 +77,9 @@ For preparing the FWI parameters for retraining dataset:
 ### Retraining: Stefano's training models 
 "combustion_training_workflow_mathes.R": Runs random forest model on the retraining dataset, and creates the machine learning models for above and belowground combusiton prediction.  
 
-      Model_Above: Above_full_model_ranger.rds
+Model_Above: Above_full_model_ranger.rds
                   rfe_importance.csv
                   
-      Model_Below: Below_full_model_ranger.rds
+Model_Below: Below_full_model_ranger.rds
                   rfe_importance.csv   
->>>>>>> eab6db33e17d5b16931fccf82c4c9113cce974b3
+
