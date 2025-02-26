@@ -11,6 +11,9 @@ Workflow was modified from Anna Talucci's code.
 
 ## Gathering data layers and running combustion model 
 
+Example scripts and workflow that uses the 9 fires from the Yukon Flats areas. I segemented my 40 fire dataset to accomodate computational limits with GEE. I ran this workflow for each of the groups of fires. 
+
+
 ### Step 01 
 R script: “OrganizeShpData_MathesYFFires.Rmd”: 
 Organize the shapefile data. Find the point data for the fires in the subdataset from the Alaska Large dataset Point shapefile (Fires in the dataset are not included in the polygon data). Create a burned area “polygon”: A circle buffer around the point equal to the size of the total burned area ( in m2). Save as the YFFiresPerimeter.shp series in Output file. 
