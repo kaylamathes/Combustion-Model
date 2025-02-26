@@ -1,0 +1,165 @@
+---
+title: "Combine Data for Combustion Model"
+author: "Anna Talucci"
+date: "2023-08-03"
+output: html_document
+---
+
+
+# Overview
+ For 20 landscapes clean and combine data for combustion model.
+ 
+ Create on data frame with all sampled points and variables. The dataframe will be subset in the model script.
+
+# Librarys
+```{r}
+library(tidyverse)
+```
+
+# Data
+```{r}
+
+```
+## FWI
+
+```{r}
+
+FWI <- read.csv("../YF_RealPerimeters/OutputYFFires/Step05/FWI_average.csv")
+```
+
+```{r}
+min(FWI$fire_weather_index_ave)
+max(FWI$fire_weather_index_ave)
+```
+
+
+### Terrain
+
+```{r}
+terrain =  list.files(path="../YF_RealPerimeters/OutputYFFires/Step08/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(NAME, as.character))) %>%
+  bind_rows()%>%
+    dplyr::select(!"system:index")%>%
+  dplyr::select(!ID)%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")
+```
+
+```{r}
+terrain 
+```
+
+```{r}
+ treecover =  list.files(path="../YF_RealPerimeters/OutputYFFires/Step07/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv)  %>%
+  map_dfr(., ~ .x %>%
+        mutate(across(NAME, as.character))) %>%
+  bind_rows() %>%
+    dplyr::select(!"system:index")%>%
+  dplyr::select(!ID)%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")
+```
+
+### veg
+```{r}
+sveg =  list.files(path="../YF_RealPerimeters/OutputYFFires/Step06/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(NAME, as.character))) %>%
+  bind_rows()%>%
+    dplyr::select(!"system:index")%>%
+  dplyr::select(!ID)%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")
+```
+
+```{r}
+sveg 
+```
+
+### Soil
+```{r}
+ssoil =  list.files(path="../YF_RealPerimeters/OutputYFFires/Step09/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(NAME, as.character))) %>%
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID)%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")
+```
+
+```{r}
+ssoil
+```
+
+### Soil
+```{r}
+spfi =  list.files(path="../YF_RealPerimeters/OutputYFFires/Step10/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(NAME, as.character))) %>%
+  bind_rows()%>%
+  dplyr::select(ID2:lon)
+```
+
+```{r}
+spfi
+```
+
+### Join
+```{r}
+(static = full_join(treecover, sveg, by = c("NAME", "ID2", "RID", "RECORDN", "lat", "lon")) %>%
+    full_join(., ssoil, by = c("NAME", "ID2", "RID", "RECORDN", "lat", "lon")) %>%
+    full_join(., spfi, by = c("NAME", "ID2", "RID", "RECORDN", "lat", "lon"))%>%
+  full_join(., terrain, by = c("NAME", "ID2", "RID", "RECORDN", "lat", "lon")))
+```
+
+
+## Climate NA
+
+```{r}
+climateNA =  list.files(path="../YF_RealPerimeters/OutputYFFires/Step11_ClimateNAOutput/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv) %>% 
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID)%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")
+  
+```
+
+```{r}
+climateNA 
+```
+
+
+
+# Combine to Datasets: 
+```{r}
+
+static$ID2 <- as.character(static$ID2)
+climateNA$ID2 <- as.character(climateNA$ID2)
+FWI$ID2 <- as.character(FWI$ID2)
+
+
+
+allData = full_join(static,climateNA, by = c("ID2", "NAME", "RID","RECORDN",  "lat", "lon")) %>%
+  full_join(., FWI, by = c("ID2", "NAME", "RID"))
+```
+
+```{r}
+allData
+```
+
+
+# Write to csv
+
+```{r}
+write_csv(allData, "../YF_RealPerimeters/OutputYFFires/DataCombustionModel.csv")
+```
+**THE END**
