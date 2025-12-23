@@ -1,0 +1,70 @@
+---
+title: "Organize shapefile data"
+author: "Kayla Mathes" 
+date: "204-11-22"
+output: html_document
+---
+
+# Overview
+
+# Packages
+```{r}
+library(terra)
+library(gdalUtilities)
+library(sf)
+library(tidyverse)
+```
+
+# Data
+
+
+```{r}
+options(scipen = 999)
+
+
+Perimeters = st_read("/Users/kmathes/Desktop/FSPro_Runs/2007_Marten Creek/2007_Marten_Creek_EnsemblePerimeters.shp")%>%
+  st_transform(crs = 3338)
+
+
+##Find the NA valid fires 
+Perimeters <- Perimeters%>%
+  mutate(Valid = as.character(st_is_valid(.)))
+
+##Delete the NA valid fires 
+Perimeters_valid <- Perimeters%>%
+  filter(Valid == "TRUE")
+
+
+Perimeters_union <- Perimeters_valid%>%
+   summarise(geometry = st_union(geometry))
+
+ggplot()+
+  geom_sf(data = Perimeters_noclip)
+
+
+```
+
+
+
+# Write to file
+
+```{r eval=FALSE, include=FALSE}
+st_write(Perimeters_clip, "../Counterfactual/Output/2022_Kuranakh/Perimeter_Kuranakh.shp", driver  = "ESRI Shapefile", append = FALSE)
+
+
+
+```
+
+
+
+```{r}
+
+library(ggplot2)
+
+ggplot(Perimeters, aes(x = SIZE_ACRES))+
+  geom_histogram(bin = 100)+
+  geom_vline(aes(xintercept = median(SIZE_ACRES)),col='red',size=1, linetype = 2)+
+ geom_vline(aes(xintercept = mean(SIZE_ACRES)),col='blue',size=1, linetype = 2)
+
+
+```
