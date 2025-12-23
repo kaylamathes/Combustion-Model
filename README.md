@@ -9,7 +9,7 @@ This is a modified workflow for using Stefano Potter's machine learning model (P
 Workflow was modified from Anna Talucci's code. 
 
 
-## Gathering data layers and running combustion model 
+## Gathering data layers and running combustion model (Counterfactual Folder) 
 
 Scripts and workflow for the counterfactual fire perimeters for historical fire dataset of 30 fires in interior Alaska. Using FSPRO, we modeled how large each of these fires would have gotten had suppression action not occured. 
 
@@ -38,13 +38,6 @@ Input: Counterfactual Perimeters (Output from step 1) + tifs of burn pixels (out
 
 Output: Burnpoint shapefiles (shapefile of the centroid of the pixel for each fire) 
 
-### Step 04: [WILL DELETE THIS]
-R script: "DayofBurn_YFFires.Rmd": 
-Create a day of burn shapefile by combining the burn point datafile with the manual day of burn csvs for each fire: Output: DayofBurn.shp series.  
-
-Input: burnpoints.shp (output of step 3) + all the ManualDoB csv (output of step 3)
-
-Output: DayofBurn shapefile 
 
 ### Step 04: 
 EE:  https://code.earthengine.google.com/3f674b674b1a2c0215c83f0b4555c8b7
@@ -55,39 +48,39 @@ Input: Burnpoint shapefile (output from step 3)
 Output: FWI csv files for each fire 
 
 
-### Step 06: 
-GEE script: “Step06_StaticVegetation”: https://code.earthengine.google.com/6142989d303d29308590bfc84a66528b
-Extract the landcover parameters for each fire. Download the csv file in Step 06. 
+### Step 05: 
+EE script:: https://code.earthengine.google.com/e2505d698abc16dfd1706a0e8224a677
+Extract the landcover parameters for each fire. Download the csv file in Step 05 folder. 
 
 Input: Fire perimeter shapefile (output from step 1) + burnpoint shapefile (output from step 3)
 
 Output: Static vegetation csv files 
 
-### Step 07: 
-GEE script: “TreeCoverExtract”: https://code.earthengine.google.com/d4e5cefbdf5bfb9f85439bc32915f8b9
-Extract the tree cover percentage for each fire. Download the csv files in Step 07. 
+### Step 06: 
+EE script:  https://code.earthengine.google.com/d4e5cefbdf5bfb9f85439bc32915f8b9
+Extract the tree cover percentage for each fire. Download the csv files in Step 06. 
 
 Input: Fire perimeter shapefile (output from step 1) + burnpoint shapefile (output from step 3)
 
 Output: Treecover extract csv files 
 
-### Step 08: 
+### Step 07: 
 First: R script: “TWI_input.R” 
-Calculate the TWI tif from the DEM files associated with each fire. Import these TWI tif files into GEE. 
+Using arctic DEM raster file to create Topographic wetness index tif fires that overlay all the fire perimeters. Import these TWI tif files into EE as assets. 
 
 Input: DEM tiles (From the FABDEM data downloads) + fire perimeters (Output from Step 1)
 
 Output: TWI images for each fire 
 
-Second: GEE “StaticTerrain: https://code.earthengine.google.com/3d6ff1205850b40b13972d33b874a5ca
-Calculate the DEM, TWI, slope and aspect for each fire. Download the csv for each fire in Step 8. 
+Second: EE: https://code.earthengine.google.com/ef48dc345e4067b58a23629717992f62
+Calculate the DEM, TWI, slope and aspect for each fire. Download the csv for each fire in Step 7. 
 
-Input: TWI images for each fire (Input from step 8a) + Fire perimeter shapefile (output from step 1) + burnpoint shapefile (output from step 3)
+Input: TWI images for each fire (Input from step 7a) + Fire perimeter shapefile (output from step 1) + burnpoint shapefile (output from step 3)
 
-Output: TWI csv files 
+Output: Topographic variables csv files 
 
 ### Step 09: 
-GEE script: “Static soil": https://code.earthengine.google.com/f03c3612dd1811b70fa1eba610d31267
+EE script: “Static soil": https://code.earthengine.google.com/f03c3612dd1811b70fa1eba610d31267
 Extract the soil parameters for each fire. Download the csv file in Step 09. 
 
 Input: Fire perimeter shapefile (output from step 1) + burnpoint shapefile (output from step 3)
@@ -129,7 +122,7 @@ Output: above and belowground combustion prediction
 ### Step 14: 
 
 
-## Retraining 
+## Retraining (Retraining Folder)
 
 This machine learning model needed to be retrained, because we could not us any of the post-fire paramters that were included in the original model. Additionally, we needed to use different TWI and FWI data, so the model needed to be retrained with those new topographic data sources. 
 
