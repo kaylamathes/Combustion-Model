@@ -2,17 +2,16 @@
 
 ## Overview 
 Workflow to estimate above and belowground combustion for historical fires on yedoma in the boreal Alaska Interior that were suppressed with early action. 
-Using this model to quantify both "real" combustion, combustion that occured before the fire was contained/controlled. 
-And, using this model to quantify "avoided" combustion from the retrospective fire spreads that would have occured without suppression. 
+We are leveraging this model to quantify both "real" combustion, combustion that occured before the fire was contained/controlled and 
+ to quantify "avoided" combustion from the retrospective fire spreads that would have occured without suppression. 
 
-This is a modified workflow for using Stefano Potter's machine learning model to predict above and belowground combustion from boreal wildfires. 
+This is a modified workflow for using Stefano Potter's machine learning model (Potter et al. 2023) to predict above and belowground combustion from boreal wildfires. 
 Workflow was modified from Anna Talucci's code. 
 
 
 ## Gathering data layers and running combustion model 
 
-Example scripts and workflow that uses the 9 fires from the Yukon Flats areas. I segemented my 40 fire dataset to accomodate computational limits with GEE. I ran this workflow for each of the groups of fires. 
-
+Scripts and workflow for the counterfactual fire perimeters for historical fire dataset of 30 fires in interior Alaska. Using FSPRO, we modeled how large each of these fires would have gotten had suppression action not occured. 
 
 ### Step 01 
 R script: “OrganizeShpData_MathesYFFires.Rmd”: 
@@ -22,11 +21,11 @@ Input file: Alaska large fire dataset (point shapefile)
 
 Output file: YFFiresPerimeters shapefile (polygons of buffer zone around the fire point that is the size of the burned area)
 
-### Step 02: 
-GEE: Step02_LandsatForPoints: https://code.earthengine.google.com/602a64985457aa9deafa7d6be0dcde73
+### Step 02: LandsatForPoints
+EE: https://code.earthengine.google.com/9498dd63d6a672e9b994af5d0eb3c51b
 Landsat Image for points: extract tiff files of the centroid of the pixels for each fire. Tif file for each fires. Download the images as Step02 firename.tif in output file .
 
-Input: YFFirePerimeters (Output from step 1)
+Input: Fire perimeter (Full extent of countefactual fire perimeters for each fire) (Output from step 1)
 
 Output: tif files of pixel centroid 
 
@@ -133,10 +132,12 @@ Input: Output from step 12
 
 Output: above and belowground combustion prediction 
 
+### Step 14: 
+
+
 ## Retraining 
 
-This machine learning model needed to be retrained, because we could not use all the vegetation, fire severity parameters that are included in the orginial model. Additionally, we needed to use different TWI and FWI data, so the model 
-needed to be retrained with those new topographic data sources. 
+This machine learning model needed to be retrained, because we could not us any of the post-fire paramters that were included in the original model. Additionally, we needed to use different TWI and FWI data, so the model needed to be retrained with those new topographic data sources. 
 
 ### Preparing the training dataset (Provided by Stefano Potter: using field data across NA boreal domain)
 "Preparing_training_dataframe.R": This script eliminates the parameters we cannot measure with the hypothetical fire spreads (post-fire vegetation parameters). Then it adds the new TWI and FWI data. 
@@ -148,7 +149,7 @@ For preparing the TWI parameters for retraining dataset:
 
 For preparing the FWI parameters for retraining dataset: 
 
-  Step 1: Turn Day of burn (DOB_1st) into calendar data and upload a csv of all retraining datapoints with calendar date 
+  Step 1: Turn Day of burn (DOB_1st) into calendar date and upload a csv of all retraining datapoints with calendar date 
   Step 2: GEE: https://code.earthengine.google.com/cb24372bf20114cedb4e61ee4bfd5e53: Calculate the FWI variables for the training dataset. 
 
 ### Retraining: Stefano's training models 
