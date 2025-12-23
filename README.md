@@ -21,11 +21,11 @@ Input file: Alaska large fire dataset (point shapefile)
 
 Output file: YFFiresPerimeters shapefile (polygons of buffer zone around the fire point that is the size of the burned area)
 
-### Step 02: 
-GEE: Step02_LandsatForPoints: https://code.earthengine.google.com/602a64985457aa9deafa7d6be0dcde73
+### Step 02: LandsatForPoints
+EE: https://code.earthengine.google.com/9498dd63d6a672e9b994af5d0eb3c51b
 Landsat Image for points: extract tiff files of the centroid of the pixels for each fire. Tif file for each fires. Download the images as Step02 firename.tif in output file .
 
-Input: YFFirePerimeters (Output from step 1)
+Input: Fire perimeter (Full extent of countefactual fire perimeters for each fire) (Output from step 1)
 
 Output: tif files of pixel centroid 
 
