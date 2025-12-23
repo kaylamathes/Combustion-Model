@@ -1,0 +1,134 @@
+---
+title: "Step03_RasterToPointsYFFires"
+output: html_document
+date: "2024-11-25"
+---
+
+# Overview
+Produce point shapefiles for burned areas within landscapes of interest. Each point is a landsat pixel.
+
+# Packages
+```{r}
+library(terra)
+library(gdalUtilities)
+library(sf)
+library(tidyverse)
+library(ids)
+library(stringi)
+
+```
+
+# Data
+
+## Perimeter Shapefile Data
+
+```{r}
+CounterfactualBurn = st_read("../Counterfactual/Output/2022_Kuranakh/Perimeter_Kuranakh.shp", "Perimeter_Kuranakh")%>%
+  st_transform(crs = 3338)
+
+```
+
+## List of rasters
+
+```{r}
+
+bilist <- list.files(path="../Counterfactual/Output/2022_Kuranakh/Step02/",pattern='tif$', full.names = TRUE)
+
+```
+
+#View the raster
+```{r}
+bilist
+
+```
+
+### Name items in a list with file name
+
+```{r}
+names(bilist) <- tools::file_path_sans_ext(basename(bilist))
+
+```
+
+#Functions
+```{r}
+
+
+df_to_sf <- function(x){
+  st_as_sf(x, 
+           coords = c("lon","lat"),
+           crs=3338)
+}
+
+```
+
+# Map functions across list
+
+```{r}
+geousa <- function(list){ 
+  purrr::map(list, rast) %>%
+  purrr::map(., as.points) %>%
+  purrr::map(., df_to_sf) %>% 
+  map2(names(.), ~mutate(.x, FXN = .y)) %>%
+  bind_rows() %>%
+  st_intersection(., CounterfactualBurn) %>%
+     mutate(ID1 = stri_rand_strings(n(), 9)) %>%
+  st_transform(., crs = 3338)
+  # mutate(ID = as.numeric(str_extract(FXN, "[0-9]+"))) 
+    #dplyr::select(lat, lon, FXN, FIREYEA, ID1, geometry) %>%
+}
+
+```
+
+# Apply Functions
+
+```{r}
+bi2 = geousa(bilist)
+```
+
+## Check and summarize and rename FXN and fireYr and select only the columns of interest 
+##RID column is to create a unqiue ID within a given year in case you have to separate the GEE within a year because it is too big 
+```{r}
+bi2
+
+length(unique(bi2$FXN))
+length(unique(bi2$ID1))
+
+
+bi2 <- bi2%>%
+rename (ID = FXN)%>%
+  mutate(RID = row_number())%>%
+  dplyr::select(ID1, lat, lon, ID, RID,geometry)
+
+bi2$RID <- as.numeric(bi2$RID)
+
+```
+
+# Write to shp
+
+```{r}
+#st_write(bi2, "../Counterfactual/Output/2022_Kuranakh/Kuranakh_BurnPoints.shp", driver="ESRI Shapefile", append = FALSE)
+```
+
+```{r}
+###Some of my fires were too big to extract all the parameters, so I split the burn points for these fires into two parts
+SwiftFork <-st_read("../Counterfactual/Output/2020_SwiftFork/SwiftFork_Burnpoints.shp")
+
+SwiftFork1 <-SwiftFork%>%
+  filter(RID < 4000000)%>%
+  rename(RID_old = RID)%>%
+  mutate(RID = row_number())
+
+#st_write(SwiftFork1, "../Counterfactual/Output/2020_SwiftFork/SwiftFork_BurnPoints1.shp", driver="ESRI Shapefile", append = FALSE)
+
+
+
+SwiftFork2 <-SwiftFork%>%
+  filter(RID > 3999999)%>%
+  rename(RID_old = RID)%>%
+  mutate(RID = row_number())
+
+#st_write(SwiftFork2, "../Counterfactual/Output/2020_SwiftFork/SwiftFork_BurnPoints2.shp", driver="ESRI Shapefile", append = FALSE)
+
+
+
+```
