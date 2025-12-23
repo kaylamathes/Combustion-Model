@@ -65,7 +65,7 @@ Input: Fire perimeter shapefile (output from step 1) + burnpoint shapefile (outp
 Output: Treecover extract csv files 
 
 ### Step 07: 
-First: R script: “TWI_input.R” 
+First: R script: “TWI_input_Counterfactual.R” 
 Using arctic DEM raster file to create Topographic wetness index tif fires that overlay all the fire perimeters. Import these TWI tif files into EE as assets. 
 
 Input: DEM tiles (From the FABDEM data downloads) + fire perimeters (Output from Step 1)
@@ -79,47 +79,44 @@ Input: TWI images for each fire (Input from step 7a) + Fire perimeter shapefile 
 
 Output: Topographic variables csv files 
 
-### Step 09: 
-EE script: “Static soil": https://code.earthengine.google.com/f03c3612dd1811b70fa1eba610d31267
-Extract the soil parameters for each fire. Download the csv file in Step 09. 
+### Step 08: 
+EE script: https://code.earthengine.google.com/aa23a7fa18ded114ab0a8009b4658492
+Extract the soil parameters for each fire. Download the csv file in Step 08. 
 
 Input: Fire perimeter shapefile (output from step 1) + burnpoint shapefile (output from step 3)
 
 Output: static soil csv files 
 
-### Step 10: 
-GEE script: “PFI Static soil":https://code.earthengine.google.com/57e0658fcc4c6676408463aca86b87d6
-Extract the PFI for soil parameters for each fire. Download the csv file in Step 10.
+### Step 09: 
+EE script: https://code.earthengine.google.com/f94779392ca3c12691377465c666fb3b
+Extract the PFI (permafrost favorability Index) for soil parameters for each fire. Download the csv file in Step 09.
 
 Input: Fire perimeter shapefile (output from step 1) + burnpoint shapefile (output from step 3)
 
 Output: PFI Static soil csv files 
 
-### Step 11: 
-GEE: Climate_NA: https://code.earthengine.google.com/599ad1a227383cd055c1a3ae7e59c8ff
+### Step 10: 
+EE: https://code.earthengine.google.com/e50db77063de343ddc14a75b55412728
 Climate NA data extract. Saved in the Climate NA output file. 
 
 Input: Fire perimeter shapefile (output from step 1) + burnpoint shapefile (output from step 3)
-
 Output: Climate NA csv files 
 
-### Step 12: 
-R script: "Step12_CombineData4CombustModel_MathesYFFires.Rmd"
+### Step 11: 
+R script: "Step11_CombineData4CombustModel_MathesYFFires.Rmd"
 combine all the parameters for the combustion model 
 
-Input: Output from step 5 - 11
+Input: Output from step 4 - 10
 
 Output: combined dataset with all parameters csv 
 
-### Step 13: 
-R Script: "Step13_CombustionModel_MathesYFFires.Rmd"
+### Step 12: 
+R Script: "Step12_CombustionModel_MathesYFFires.Rmd"
 run the combustion model on the retrained data! (See retraining steps below on how the model was retrained )
 
-Input: Output from step 12
+Input: Output from step 13
 
 Output: above and belowground combustion prediction 
-
-### Step 14: 
 
 
 ## Retraining (Retraining Folder)
