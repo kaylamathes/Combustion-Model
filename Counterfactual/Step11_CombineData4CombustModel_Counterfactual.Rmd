@@ -1,0 +1,438 @@
+---
+title: "Combine Data for Combustion Model"
+author: "Anna Talucci"
+date: "2023-08-03"
+output: html_document
+---
+
+
+# Overview
+ For 20 landscapes clean and combine data for combustion model.
+ 
+ Create on data frame with all sampled points and variables. The dataframe will be subset in the model script.
+
+# Librarys
+```{r}
+library(tidyverse)
+library(terra)
+library(sf)
+```
+
+# Data
+```{r}
+
+
+
+
+ChloyaLakes <-st_read("../Counterfactual/Output/2006_ChloyaLakes/ChloyaLake_Burnpoints.shp")
+
+
+
+
+
+
+```
+## FWI
+
+```{r}
+
+FWI1 =  list.files(path="../Counterfactual/Output/Step05/Days/FirstSet",pattern='*.csv', full.names = TRUE)%>%
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows()%>%
+    dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+   dplyr::select(!RID)
+
+
+FWI2 =  list.files(path="../Counterfactual/Output/Step05/Days/SecondSet",pattern='*.csv', full.names = TRUE)%>%
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows()%>%
+    dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+   dplyr::select(!RID)
+
+
+FWI = merge(FWI1, FWI2, by = c( "ID", "lat", "lon"))
+
+
+FWI1_2 =  list.files(path="../Counterfactual/Output/Step05_2/Days/FirstSet",pattern='*.csv', full.names = TRUE)%>%
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows()%>%
+    dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+   dplyr::select(!RID)
+
+
+FWI2_2 =  list.files(path="../Counterfactual/Output/Step05_2/Days/SecondSet",pattern='*.csv', full.names = TRUE)%>%
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows()%>%
+    dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+   dplyr::select(!RID)
+
+
+FWI_2 = merge(FWI1_2, FWI2_2, by = c( "ID", "lat", "lon"))
+
+FWI = rbind(FWI, FWI_2)
+
+```
+
+```{r}
+min(FWI$fire_weather_index)
+max(FWI$fire_weather_index)
+```
+
+
+### Terrain
+
+```{r}
+terrain =  list.files(path="../Counterfactual/Output/Step08/",pattern='*.csv', full.names = TRUE) %>%
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows()%>%
+    dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")
+
+terrain <- terrain%>%
+  mutate(duplicate = duplicated(.$RID))
+
+terrain <- terrain%>%
+  filter(duplicate != TRUE)%>%
+  dplyr::select(!duplicate)%>%
+   dplyr::select(!RID)
+
+
+terrain_2 =  list.files(path="../Counterfactual/Output/Step08_2/",pattern='*.csv', full.names = TRUE) %>%
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows()%>%
+    dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")
+
+terrain_2 <- terrain_2%>%
+  mutate(duplicate = duplicated(.$RID))
+
+terrain_2 <- terrain_2%>%
+  filter(duplicate != TRUE)%>%
+  dplyr::select(!duplicate)%>%
+   dplyr::select(!RID)
+
+terrain = rbind(terrain, terrain_2)
+  
+
+```
+
+```{r}
+terrain 
+```
+
+```{r}
+ treecover =  list.files(path="../Counterfactual/Output/Step07/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv)  %>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows() %>%
+    dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")
+
+
+ 
+ 
+ treecover_2 =  list.files(path="../Counterfactual/Output/Step07_2/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv)  %>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows() %>%
+    dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")
+
+ treecover_2 <-   treecover_2%>%
+  mutate(duplicate = duplicated(.$RID))
+ 
+ treecover_2 <-  treecover_2%>%
+  dplyr::select(!duplicate)
+ 
+ treecover <- rbind(treecover, treecover_2)%>%
+  dplyr::select(!RID)
+```
+
+### veg
+```{r}
+sveg =  list.files(path="../Counterfactual/Output/Step06/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows()%>%
+    dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+    dplyr::select(!RID)
+
+
+
+sveg_2 =  list.files(path="../Counterfactual/Output/Step06_2/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows()%>%
+    dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+    dplyr::select(!RID)
+
+
+sveg <- rbind(sveg, sveg_2)
+```
+
+```{r}
+sveg 
+```
+
+### Soil
+```{r}
+
+###In this case, I removed the static soil values that were equal to zero: These pixels are likely over water
+
+ssoil =  list.files(path="../Counterfactual/Output/Step09/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  filter(BD_30 != 0)%>%
+  dplyr::select(!RID)
+
+
+ssoil_2 =  list.files(path="../Counterfactual/Output/Step09_2/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  filter(BD_30 != 0)%>%
+    dplyr::select(!RID)
+
+
+ssoil <- rbind(ssoil, ssoil_2)
+```
+
+```{r}
+ssoil
+```
+
+### Soil
+```{r}
+spfi =  list.files(path="../Counterfactual/Output/Step10/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows()%>%
+  dplyr::select(ID:lon)
+
+
+spfi_2 =  list.files(path="../Counterfactual/Output/Step10_2/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv)%>%
+  map_dfr(., ~ .x %>%
+        mutate(across(ID, as.character))) %>%
+  bind_rows()%>%
+  dplyr::select(ID:lon)
+
+
+spfi <- rbind(spfi, spfi_2)%>%
+  dplyr::select(!RID)
+```
+
+```{r}
+spfi
+```
+
+### Join
+```{r}
+(static = full_join(FWI, spfi, by = c("lat", "lon", "ID"))%>%
+   full_join(., treecover, by = c( "ID", "lat", "lon"))%>%
+    full_join(., ssoil, by = c( "ID","lat", "lon"))%>%
+     full_join(., sveg, by = c( "ID","lat", "lon"))%>%
+    full_join(., terrain, by = c(  "ID","lat", "lon")))
+
+
+static <- static%>%
+  mutate(duplicate2 = duplicated(.$RID))
+
+static <-  static%>%
+  filter(duplicate2 != TRUE)%>%
+  dplyr::select(!duplicate2)
+ 
+
+```
+
+
+## Climate NA
+
+```{r}
+
+climateNA1 = list.files(path="../Counterfactual/Output/Step11/First/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv) %>% 
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  dplyr::select(!RID)
+
+climateNA1_2 = list.files(path="../Counterfactual/Output/Step11_2/First/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv) %>% 
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  dplyr::select(!RID)
+
+climateNA1 <- rbind(climateNA1,climateNA1_2)
+
+climateNA2 = list.files(path="../Counterfactual/Output/Step11/Second/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv) %>% 
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  dplyr::select(!RID)
+
+climateNA2_2 = list.files(path="../Counterfactual/Output/Step11_2/Second/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv) %>% 
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  dplyr::select(!RID)
+
+climateNA2 <- rbind(climateNA2,climateNA2_2)
+
+climateNA3 = list.files(path="../Counterfactual/Output/Step11/Third/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv) %>% 
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  dplyr::select(!RID)
+
+climateNA3_2 = list.files(path="../Counterfactual/Output/Step11_2/Third/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv) %>% 
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  dplyr::select(!RID)
+
+climateNA3 <- rbind(climateNA3,climateNA3_2)
+
+climateNA4 = list.files(path="../Counterfactual/Output/Step11/Fourth/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv) %>% 
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  dplyr::select(!RID)
+
+climateNA4_2 = list.files(path="../Counterfactual/Output/Step11_2/Fourth/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv) %>% 
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  dplyr::select(!RID)
+
+climateNA4 <- rbind(climateNA4,climateNA4_2)
+
+climateNA5 = list.files(path="../Counterfactual/Output/Step11/Fifth/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv) %>% 
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  dplyr::select(!RID)
+
+climateNA5_2 = list.files(path="../Counterfactual/Output/Step11_2/Fifth/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv) %>% 
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  dplyr::select(!RID)
+
+climateNA5 <- rbind(climateNA5,climateNA5_2)
+
+
+climateNA6 = list.files(path="../Counterfactual/Output/Step11/Sixth/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv) %>% 
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  dplyr::select(!RID)
+
+climateNA6_2 = list.files(path="../Counterfactual/Output/Step11_2/Sixth/",pattern='*.csv', full.names = TRUE) %>% 
+  purrr::map(., read_csv) %>% 
+  bind_rows()%>%
+  dplyr::select(!"system:index")%>%
+  dplyr::select(!ID1)%>%
+  dplyr::select(!".geo")%>%
+  dplyr::select(!RID)
+
+climateNA6 <- rbind(climateNA6,climateNA6_2)
+
+climateNAtotal = merge(climateNA1, climateNA2, by = c( "lat", "lon", "ID"))
+climateNAtotal = merge(climateNAtotal, climateNA3, by = c("lat", "lon", "ID"))
+climateNAtotal = merge(climateNAtotal, climateNA4, by = c("lat", "lon", "ID"))
+climateNAtotal = merge(climateNAtotal, climateNA5, by = c("lat", "lon", "ID"))
+ climateNAtotal = merge(climateNAtotal, climateNA6, by = c("lat", "lon", "ID")) 
+
+
+```
+
+```{r}
+climateNA 
+```
+
+
+
+# Combine to Datasets: 
+```{r}
+
+
+allData = full_join(static,climateNAtotal, by = c("ID", "lat", "lon")) 
+```
+
+```{r}
+allData
+
+unique(allData$tree_canopy_cover)
+```
+
+
+# Write to csv
+
+```{r}
+write_csv(allData, "../Counterfactual/Output/2020_SwiftFork/SwiftFork_CombustionModel.csv")
+```
+**THE END**
