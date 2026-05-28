@@ -39,7 +39,7 @@ Input: Counterfactual Perimeters (Output from step 1) + tifs of burn pixels (out
 Output: Burnpoint shapefiles (shapefile of the centroid of the pixel for each fire) 
 
 
-### Step 04: 
+### Step 04: FWI variables: Averaged across the 1-3 days of burning (CEM dataset) 
 EE:  https://code.earthengine.google.com/3f674b674b1a2c0215c83f0b4555c8b7
 extract average FWI data for all the days of burn for each fire. Download the csv files into the Step 4 folder. 
 
@@ -48,7 +48,7 @@ Input: Burnpoint shapefile (output from step 3)
 Output: FWI csv files for each fire 
 
 
-### Step 05: 
+### Step 05: Landcover: ABoVE products 
 EE script:: https://code.earthengine.google.com/e2505d698abc16dfd1706a0e8224a677
 Extract the landcover parameters for each fire. Download the csv file in Step 05 folder. 
 
@@ -56,7 +56,7 @@ Input: Fire perimeter shapefile (output from step 1) + burnpoint shapefile (outp
 
 Output: Static vegetation csv files 
 
-### Step 06: 
+### Step 06: Treecover: Global Forest Cover Change (GFCC) 
 EE script:  https://code.earthengine.google.com/d4e5cefbdf5bfb9f85439bc32915f8b9
 Extract the tree cover percentage for each fire. Download the csv files in Step 06. 
 
@@ -64,7 +64,7 @@ Input: Fire perimeter shapefile (output from step 1) + burnpoint shapefile (outp
 
 Output: Treecover extract csv files 
 
-### Step 07: 
+### Step 07: Topography Parameters: FABDEM + Calculated TWI, slope and aspect 
 First: R script: “TWI_input_Counterfactual.R” 
 Using arctic DEM raster file to create Topographic wetness index tif fires that overlay all the fire perimeters. Import these TWI tif files into EE as assets. 
 
@@ -79,7 +79,7 @@ Input: TWI images for each fire (Input from step 7a) + Fire perimeter shapefile 
 
 Output: Topographic variables csv files 
 
-### Step 08: 
+### Step 08: Soil parameter: Soil Grids 
 EE script: https://code.earthengine.google.com/aa23a7fa18ded114ab0a8009b4658492
 Extract the soil parameters for each fire. Download the csv file in Step 08. 
 
@@ -87,7 +87,7 @@ Input: Fire perimeter shapefile (output from step 1) + burnpoint shapefile (outp
 
 Output: static soil csv files 
 
-### Step 09: 
+### Step 09: Peramfrost Index: Gruber 
 EE script: https://code.earthengine.google.com/f94779392ca3c12691377465c666fb3b
 Extract the PFI (permafrost favorability Index) for soil parameters for each fire. Download the csv file in Step 09.
 
@@ -95,7 +95,7 @@ Input: Fire perimeter shapefile (output from step 1) + burnpoint shapefile (outp
 
 Output: PFI Static soil csv files 
 
-### Step 10: 
+### Step 10: Climate Data: Climate NA
 EE: https://code.earthengine.google.com/e50db77063de343ddc14a75b55412728
 Climate NA data extract. Saved in the Climate NA output file. 
 
